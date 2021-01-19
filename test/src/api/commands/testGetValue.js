@@ -13,7 +13,7 @@ describe('getValue', function() {
 
   it('client.getValue()', function(done) {
     MockServer.addMock({
-      url : '/wd/hub/session/1352110219202/element/0/attribute/value',
+      url : '/wd/hub/session/1352110219202/element/0/property/value',
       method:'GET',
       response : JSON.stringify({
         sessionId: '1352110219202',
@@ -23,9 +23,9 @@ describe('getValue', function() {
     });
 
     this.client.api.getValue('css selector', '#weblogin', function callback(result) {
-      assert.equal(result.value, 'test value');
+      assert.strictEqual(result.value, 'test value');
     }).getValue('#weblogin', function callback(result) {
-      assert.equal(result.value, 'test value');
+      assert.strictEqual(result.value, 'test value');
     });
 
     this.client.start(done);

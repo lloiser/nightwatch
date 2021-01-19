@@ -44,9 +44,21 @@ describe('testRunWithGlobalHooks', function() {
         afterEachCount++;
       },
       reporter(results, cb) {
-        assert.equal(globals.calls, 19);
-        assert.equal(beforeEachCount, 4);
-        assert.equal(afterEachCount, 4);
+        assert.deepStrictEqual(globals.settings.selenium, {
+          check_process_delay: 500,
+          cli_args: {},
+          log_path: '',
+          max_status_poll_tries: 15,
+          port: 10195,
+          server_path: null,
+          start_process: true,
+          status_poll_interval: 200,
+          url: 'http://localhost:10195',
+          version2: true
+        });
+        assert.strictEqual(globals.calls, 19);
+        assert.strictEqual(beforeEachCount, 4);
+        assert.strictEqual(afterEachCount, 4);
         cb();
       }
     };
@@ -60,7 +72,7 @@ describe('testRunWithGlobalHooks', function() {
       silent: false,
       output: false,
       persist_globals: true,
-      globals: globals,
+      globals,
       output_folder: false
     };
 
@@ -206,7 +218,7 @@ describe('testRunWithGlobalHooks', function() {
           });
         },
         reporter(results, cb) {
-          assert.equal(results.modules.sampleSingleTest.errmessages.length, 1);
+          assert.equal(results.modules.sampleSingleTest.errmessages.length, 2);
           assert.equal(results.modules.sampleWithBeforeAndAfter.errmessages.length, 1);
           assert.equal(results.modules.syncBeforeAndAfter.errmessages.length, 1);
           assert.ok(results.modules.sampleSingleTest.errmessages[0].includes('Error while running "perform" command:'));
@@ -218,6 +230,38 @@ describe('testRunWithGlobalHooks', function() {
     };
 
     return NightwatchClient.runTests(testsPath, settings);
+  });
+
+  it('test run with global async beforeEach and timeout error', async function() {
+    let testsPath = path.join(__dirname, '../../sampletests/before-after');
+
+    let settings = {
+      selenium: {
+        port: 10195,
+        version2: true,
+        start_process: true
+      },
+      silent: true,
+      output: false,
+      persist_globals: true,
+      globals: {
+        asyncHookTimeout: 100,
+        before(done) {
+        }
+      },
+      output_folder: false
+    };
+
+    let expectedErr;
+
+    try {
+      await NightwatchClient.runTests(testsPath, settings);
+    } catch (err) {
+      expectedErr = err;
+    }
+
+    assert.ok(expectedErr instanceof Error);
+    assert.ok(expectedErr.message.includes('while executing "global before".'));
   });
 
   it('test run with global async beforeEach and done(err);', function() {
@@ -255,6 +299,9 @@ describe('testRunWithGlobalHooks', function() {
     let testsPath = path.join(__dirname, '../../sampletests/withfailures');
     let globals = {
       calls: 0,
+      waitForConditionPollInterval: 5,
+      waitForConditionTimeout: 5,
+      retryAssertionTimeout: 10,
       beforeEach: function(client, done) {
         assert.deepEqual(client.currentTest.results, {errors: 0, failed: 0, passed: 0, assertions: [], tests: 0});
         assert.strictEqual(client.currentTest.module, 'sample');
@@ -283,16 +330,16 @@ describe('testRunWithGlobalHooks', function() {
       }
     };
 
-    let settings = {
+    const settings = {
       selenium: {
         port: 10195,
         version2: true,
         start_process: true
       },
-      silent: true,
+      silent: false,
       output: false,
       persist_globals: true,
-      globals: globals,
+      globals,
       output_folder: false
     };
 

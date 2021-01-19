@@ -11,6 +11,8 @@ module.exports = {
         webdriver:{
           start_process: false
         },
+        output: process.env.VERBOSE === '1' || false,
+        silent: false
       })
         .then(client => {
           this.client = client;

@@ -3,17 +3,14 @@ const MockServer  = require('../../../lib/mockserver.js');
 const Nightwatch = require('../../../lib/nightwatch.js');
 
 describe('clearValue', function() {
+
   before(function(done) {
     this.server = MockServer.init();
-    this.server.on('listening', () => {
-      done();
-    });
+    this.server.on('listening', () => done());
   });
 
   after(function(done) {
-    this.server.close(function () {
-      done();
-    });
+    this.server.close(() => done());
   });
 
   it('client.clearValue()', function(done) {
@@ -144,8 +141,8 @@ describe('clearValue', function() {
 
       client.api.clearValue({selector: '#webdriver-notfound', timeout: 0}, function(result) {
         assert.strictEqual(result.status, -1);
-        assert.strictEqual(result.value.error, 'An error occurred while running .clearValue() command on <#webdriver-notfound>:');
-        assert.strictEqual(result.value.message, 'An error occurred while running .clearValue() command on <#webdriver-notfound>:');
+        assert.strictEqual(result.value.error, 'An error occurred while running .clearValue() command on <#webdriver-notfound>: no such element; Unable to locate element: #webdriver-notfound');
+        assert.strictEqual(result.value.message, 'An error occurred while running .clearValue() command on <#webdriver-notfound>: no such element; Unable to locate element: #webdriver-notfound');
       });
 
       client.start(done);

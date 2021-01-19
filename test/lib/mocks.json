@@ -4,9 +4,7 @@
       "url": "/wd/hub/session",
       "postdata": {
         "desiredCapabilities": {
-          "browserName": "firefox",
-          "acceptSslCerts": true,
-          "platform": "ANY"
+          "browserName": "firefox"
         }
       },
       "response": {
@@ -29,13 +27,10 @@
       "url": "/session",
       "postdata": {
         "capabilities": {
-          "browserName": "firefox",
-          "acceptSslCerts": true
+          "browserName": "firefox"
         },
         "desiredCapabilities": {
-          "browserName": "firefox",
-          "acceptSslCerts": true,
-          "platform": "ANY"
+          "browserName": "firefox"
         }
       },
 

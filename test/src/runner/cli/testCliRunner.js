@@ -10,16 +10,13 @@ describe('Test CLI Runner', function() {
 
     mockery.enable({useCleanCache: true, warnOnReplace: false, warnOnUnregistered: false});
     mockery.registerMock('./argv-setup.js', {
-      command: function(command) {
-        return {
-          isDefault: function(file) {
-            return file.includes('nightwatch.');
-          },
-          defaults: function() {
-            return './nightwatch.json';
-          }
-        };
-      }
+      isDefault(option, value) {
+        return value.includes('nightwatch.')
+      },
+
+      getDefault() {
+        return './nightwatch.json';
+      },
     });
 
     let config = {
@@ -311,6 +308,7 @@ describe('Test CLI Runner', function() {
       tag: 'danger',
       filter: 'test-filename-filter',
       skipgroup: 'test-skip-group',
+      timeout: 11
     }).setup();
 
     assert.strictEqual(runner.test_settings.silent, false);
@@ -319,6 +317,8 @@ describe('Test CLI Runner', function() {
     assert.strictEqual(runner.test_settings.filename_filter, 'test-filename-filter');
     assert.deepEqual(runner.test_settings.skipgroup, ['test-skip-group']);
     assert.strictEqual(runner.globals.settings.output_folder, 'test-output-folder');
+    assert.strictEqual(runner.test_settings.globals.waitForConditionTimeout, 11);
+    assert.strictEqual(runner.test_settings.globals.retryAssertionTimeout, 11);
   });
 
   it('testSetOutputFolder', function() {
@@ -345,23 +345,6 @@ describe('Test CLI Runner', function() {
   });
 
   it('testReadSettingsDeprecated', function(done) {
-    let disableColorsCalled = false;
-    mockery.registerMock('../../util/logger.js', {
-      setOutputEnabled() {
-
-      },
-      setDetailedOutput() {
-
-      },
-      setErrorLog() {
-
-      },
-      disableColors() {
-        disableColorsCalled = true;
-      },
-      enable() {}
-    });
-
     mockery.registerMock('fs', {
       statSync: function(module) {
         if (module == './settings.json') {
@@ -389,8 +372,10 @@ describe('Test CLI Runner', function() {
     assert.deepEqual(runner.test_settings.skipgroup, ['tobeskipped']);
     assert.strictEqual(runner.test_settings.output, false);
     assert.strictEqual(runner.test_settings.silent, false);
+    assert.strictEqual(runner.test_settings.disable_error_log, false);
+    assert.strictEqual(runner.test_settings.disable_colors, true);
     assert.strictEqual(runner.test_settings.filename_filter, 'tests*.js');
-    assert.ok(disableColorsCalled, 'disable colors not called');
+
     done();
   });
 

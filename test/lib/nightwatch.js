@@ -3,7 +3,7 @@ const lodashMerge = require('lodash.merge');
 const Nightwatch = common.require('index.js');
 const Settings = common.require('settings/settings.js');
 const MockServer  = require('./mockserver.js');
-const Logger = common.require('util/logger.js');
+const Logger = common.require('utils').Logger;
 
 module.exports = new function () {
   let _client = null;
@@ -44,7 +44,7 @@ module.exports = new function () {
     };
   }
 
-  this.createClient = function(options = {}, reporter = null) {
+  this.createClient = function(options = {}, reporter = null, argv = {}) {
     let opts = {
       selenium : {
         port: 10195,
@@ -56,6 +56,7 @@ module.exports = new function () {
       },
       silent : true,
       output : false,
+      disable_colors: true,
       globals : {
         myGlobal : 'test'
       }
@@ -65,7 +66,7 @@ module.exports = new function () {
 
     let settings = Settings.parse(opts);
 
-    return Nightwatch.client(settings, reporter);
+    return Nightwatch.client(settings, reporter, argv);
   };
 
   this.createClientDefaults = function() {

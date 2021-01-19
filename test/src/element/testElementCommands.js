@@ -1,5 +1,8 @@
 const assert = require('assert');
 const Nightwatch = require('../../lib/nightwatch.js');
+const MockServer  = require('../../lib/mockserver.js');
+const common = require('../../common.js');
+const SimplifiedReporter = common.require('reporter/simplified.js');
 
 describe('element base commands', function() {
   before(function(done) {
@@ -9,6 +12,20 @@ describe('element base commands', function() {
   after(function(done) {
     Nightwatch.stop(done);
   });
+
+  class Reporter extends SimplifiedReporter {
+    constructor(settings) {
+      super(settings);
+
+      this.errors = 0;
+    }
+
+    registerTestError(err) {
+      this.errors++;
+    }
+  }
+
+  const reporter = new Reporter({});
 
   //////////////////////////////////////////////////////////////////////////////////////
   // .element()
@@ -26,6 +43,57 @@ describe('element base commands', function() {
       });
 
     return Nightwatch.start();
+  });
+
+  it('client.element() - unhandled error', async function() {
+    const client = await Nightwatch.initClient({
+      output: false,
+      silent: false
+    }, reporter);
+
+    MockServer.addMock({
+      url: '/wd/hub/session/1352110219202/element',
+      statusCode: 500,
+      postdata: {
+        using: 'css selector',
+        value: '#element-error'
+      },
+      response: {
+        sessionId: '1352110219202',
+        state: 'unhandled error',
+        value: {
+          message: 'test message'
+        },
+        status: 13
+      }
+    }, true);
+
+    client.api.element('css selector', '#element-error', function callback(result) {
+      assert.deepStrictEqual(result, {
+        status: -1,
+        state: 'unhandled error',
+        code: '',
+        value: {
+          message: 'test message',
+          error: []
+        },
+        errorStatus: 13,
+        error:
+          'An unknown server-side error occurred while processing the command. – test message',
+        httpStatusCode: 500
+      });
+    });
+
+    await new Promise((resolve, reject) => {
+      client.start(err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+    assert.strictEqual(client.reporter.errors, 0);
   });
 
   it('client.element() W3C Webdriver protocol', async function() {
@@ -120,6 +188,48 @@ describe('element base commands', function() {
         error: 'no such element',
         message: 'Unable to locate element: .not_found',
         stacktrace: ''
+      });
+    });
+
+    return Nightwatch.start();
+  });
+
+
+  it('client.element() with 502 gateway error', async function() {
+    Nightwatch.addMock({
+      url : '/session/13521-10219-202/element',
+      postdata: {
+        using: 'css selector',
+        value: '#weblogin-error'
+      },
+      contentType: 'text/plain',
+      statusCode: 502,
+      response: `<html>
+<head>
+<title>502 Bad Gateway</title>
+</head>
+<body></body>
+</html>`
+    }, true);
+
+    await Nightwatch.initAsync({
+      output: false,
+      silent: false,
+      selenium : {
+        start_process: false,
+      },
+      webdriver:{
+        start_process: true
+      },
+    });
+
+    Nightwatch.api().element('css selector', '#weblogin-error', function(result) {
+      assert.strictEqual(result.status, -1);
+      assert.strictEqual(result.httpStatusCode, 502);
+      assert.strictEqual(result.error, '<html>\n<head>\n<title>502 Bad Gateway</title>\n</head>\n<body></body>\n</html>');
+      assert.deepStrictEqual(result.value, {
+        error: 'internal server error',
+        message: '<html>\n<head>\n<title>502 Bad Gateway</title>\n</head>\n<body></body>\n</html>'
       });
     });
 
@@ -385,7 +495,7 @@ describe('element base commands', function() {
       assert.strictEqual(expectedError.name, 'NoSuchElementError');
       assert.strictEqual(instance.suppressNotFoundErrors, false);
       assert.strictEqual(result.status, -1);
-      assert.strictEqual(result.value.error,'An error occurred while running .isVisible() command on <.not_found>:');
+      assert.strictEqual(result.value.error,'An error occurred while running .isVisible() command on <.not_found>: no such element; Unable to locate element: .not_found');
     });
 
     return Nightwatch.start();
@@ -446,6 +556,7 @@ describe('element base commands', function() {
       assert.strictEqual(instance.suppressNotFoundErrors, true);
       assert.deepStrictEqual(result, {
         status: -1,
+        code: '',
         value:
           {
             error: 'no such element',

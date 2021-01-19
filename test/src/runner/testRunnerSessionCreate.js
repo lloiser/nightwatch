@@ -36,13 +36,10 @@ describe('testRunnerSessionCreate', function() {
       postdata: JSON.stringify({
         capabilities: {
           browserName: 'firefox',
-          acceptSslCerts: true,
           name: 'Async/Test/Sample'
         },
         desiredCapabilities: {
           browserName: 'firefox',
-          acceptSslCerts: true,
-          platform: 'ANY',
           name: 'Async/Test/Sample'
         }
       }),
@@ -60,13 +57,10 @@ describe('testRunnerSessionCreate', function() {
       postdata: JSON.stringify({
         capabilities: {
           browserName: 'firefox',
-          acceptSslCerts: true,
           name: 'test-Name'
         },
         desiredCapabilities: {
           browserName: 'firefox',
-          acceptSslCerts: true,
-          platform: 'ANY',
           name: 'test-Name'
         }
       }),
@@ -100,7 +94,7 @@ describe('testRunnerSessionCreate', function() {
       webdriver: {
         start_process: true
       },
-      output: process.env.VERBOSE === '1' || false,
+      output: false,
       silent: false,
       globals: globals,
       output_folder: false

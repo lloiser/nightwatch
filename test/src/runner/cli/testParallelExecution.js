@@ -9,7 +9,7 @@ describe('test Parallel Execution', function() {
   const allArgs = [];
   const allOpts = [];
 
-  this.timeout(5000);
+  this.timeout(8000);
 
   beforeEach(function() {
     mockery.enable({useCleanCache: true, warnOnUnregistered: false});
@@ -88,11 +88,13 @@ describe('test Parallel Execution', function() {
     });
 
     runner.setup();
-
+    runner.test_settings.globals.retryAssertionTimeout = 10;
+    runner.test_settings.globals.waitForConditionTimeout = 10;
+    runner.test_settings.globals.waitForConditionPollInterval = 9;
     assert.ok(runner.test_settings.test_workers);
 
     return runner.runTests().then(_ => {
-      assert.strictEqual(allArgs.length, 32);
+      assert.strictEqual(allArgs.length, 48);
       assert.strictEqual(runner.concurrency.globalExitCode, 0);
     });
   });
@@ -134,7 +136,7 @@ describe('test Parallel Execution', function() {
     });
 
     return runner.runTests().then(_ => {
-      assert.strictEqual(allArgs.length, 32);
+      assert.strictEqual(allArgs.length, 48);
     });
   });
 
@@ -163,7 +165,7 @@ describe('test Parallel Execution', function() {
     });
 
     return runner.runTests().then(_ => {
-      assert.strictEqual(allArgs.length, 32);
+      assert.strictEqual(allArgs.length, 48);
     });
   });
 
@@ -189,5 +191,38 @@ describe('test Parallel Execution', function() {
 
     assert.strictEqual(runner.isConcurrencyEnabled([runner.argv._source]), false);
 
+  });
+
+  it('test parallel execution to ensure preservation of all process.execArgv', function() {
+    const argv = process.execArgv;
+    process.execArgv = ['--inspect'];
+
+    const CliRunner = common.require('runner/cli/cli.js');
+    const runner = new CliRunner({
+      config: path.join(__dirname, '../../../extra/parallelism-execArgv.json'),
+    });
+
+    runner.setup();
+    const worker = runner.concurrency.createChildProcess('test-worker');
+    const args = worker.getArgs();
+
+    process.execArgv = argv;
+    assert.ok(args.includes('--inspect'));
+    assert.ok(args.includes('--parallel-mode'));
+  });
+
+  it('test parallel execution with specified node options to be passed to child processes', function() {
+    const CliRunner = common.require('runner/cli/cli.js');
+    const runner = new CliRunner({
+      config: path.join(__dirname, '../../../extra/parallelism-execArgv-selected.json'),
+    });
+
+    runner.setup();
+    const worker = runner.concurrency.createChildProcess('test-worker');
+    const args = worker.getArgs();
+
+    assert.strictEqual(args.includes('--inspect'), false);
+    assert.ok(args.includes('--parallel-mode'));
+    assert.ok(args.includes('--harmony'));
   });
 });
