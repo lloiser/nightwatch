@@ -126,8 +126,7 @@ describe('test PageObject Commands', function () {
     section.waitForElementPresent('@help', 1000, true, function callback(result) {
       assert.strictEqual(result.status, 0);
       assert.strictEqual(result.value.length, 1);
-      assert.deepEqual(result.value[0], { ELEMENT: '1'});
-      assert.strictEqual(result.WebdriverElementId, '1');
+      assert.deepEqual(result.value[0], { ELEMENT: '1' });
     });
 
     this.client.start(function(err) {
@@ -220,4 +219,3 @@ describe('test PageObject Commands', function () {
     this.client.start();
   });
 });
-
